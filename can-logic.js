@@ -129,6 +129,24 @@
     return n;
   }
 
+  // Món xuất hiện nhiều trong `days` ngày gần nhất → gợi ý bấm nhanh.
+  // Gom theo tên món; kcal lấy theo lần ghi GẦN NHẤT (phòng khi Ray sửa số kcal của món đó).
+  function frequentFoods(log, today, days, limit) {
+    var counts = {};
+    for (var i = 0; i < (days || 7); i++) {
+      var d = addDays(today, -i);
+      (log[d] || []).forEach(function (e) {
+        var k = e.name;
+        if (!counts[k]) counts[k] = { name: e.name, kcal: e.kcal, foodId: e.foodId || null, count: 0, last: '' };
+        counts[k].count += e.qty || 1;
+        if (d > counts[k].last) { counts[k].last = d; counts[k].kcal = e.kcal; }
+      });
+    }
+    return Object.keys(counts).map(function (k) { return counts[k]; })
+      .sort(function (a, b) { return b.count - a.count || (a.last < b.last ? 1 : -1); })
+      .slice(0, limit || 6);
+  }
+
   // ── Tìm món (bỏ dấu tiếng Việt) ──────────────────────
   function stripAccents(s) {
     return s.normalize('NFD')
@@ -243,7 +261,7 @@
     todayStr: todayStr, addDays: addDays, daysBetween: daysBetween, fmtDateVN: fmtDateVN,
     upsertWeight: upsertWeight, removeWeight: removeWeight, latestWeight: latestWeight,
     weightOn: weightOn, weightAtOrBefore: weightAtOrBefore, movingAverage: movingAverage,
-    dayTotal: dayTotal, mealTotals: mealTotals, streak: streak,
+    dayTotal: dayTotal, mealTotals: mealTotals, streak: streak, frequentFoods: frequentFoods,
     stripAccents: stripAccents, searchFoods: searchFoods,
     chartModel: chartModel,
     createState: createState,

@@ -37,7 +37,10 @@
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
   // ── Lưu / nạp / transaction ───────────────────────────
-  function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { console.warn('Không lưu được vào localStorage', e); }
+  }
   // Chuẩn hoá state từ mọi nguồn (localStorage cũ, file import) → không thiếu trường, lọc rác.
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   function normalize(s) {
@@ -447,7 +450,26 @@
       return f;
     });
   }
+  // Chips "hay ăn gần đây": chỉ hiện khi chưa gõ tìm kiếm + có lịch sử
+  function renderSuggest() {
+    var q = $('#food-search').value;
+    var sug = q ? [] : L.frequentFoods(state.log, L.todayStr(), 7, 6);
+    $('#food-suggest').classList.toggle('hidden', !sug.length);
+    var box = $('#suggest-chips');
+    box.textContent = '';
+    sug.forEach(function (f) {
+      var chip = el('button', {
+        type: 'button', class: 'suggest-chip',
+        onclick: function () {
+          apply(function (s) { return addEntry(s, viewDate, sheetMeal, { id: f.foodId, name: f.name, kcal: f.kcal }); }, '+ ' + f.name);
+        },
+      }, [f.name]);
+      chip.appendChild(el('span', { class: 'chip-kcal', text: String(f.kcal) }));
+      box.appendChild(chip);
+    });
+  }
   function renderFoodList() {
+    renderSuggest();
     var q = $('#food-search').value;
     var foods = allFoods();
     if (sheetCat) foods = foods.filter(function (f) { return f.cat === sheetCat; });
@@ -637,6 +659,15 @@
     }
     render();
   });
+
+  // Hook cho module ngoài (photo.js bản Artifact): thêm món vào bữa đang mở trong sheet
+  window.GiamCan = {
+    addFood: function (name, kcal) {
+      apply(function (s) {
+        return addEntry(s, viewDate, sheetMeal, { id: null, name: String(name).slice(0, 80), kcal: Math.round(Number(kcal)) });
+      }, '+ ' + name);
+    },
+  };
 
   // iOS Safari chỉ kích hoạt :active (nút lún khi bấm) nếu trang có nghe touchstart
   document.addEventListener('touchstart', function () {}, { passive: true });

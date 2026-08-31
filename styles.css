@@ -353,6 +353,36 @@ main { max-width: 560px; margin: 0 auto; padding: 14px 14px 8px; }
 .check { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); margin: 10px 0 2px; cursor: pointer; }
 .check input { accent-color: var(--green); width: 16px; height: 16px; }
 
+/* ── Món hay ăn (suggestion) ── */
+.suggest { margin-bottom: 8px; }
+.suggest-head { font-size: 12.5px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.suggest-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.suggest-chips::-webkit-scrollbar { display: none; }
+.suggest-chip {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--green-deep); white-space: nowrap;
+  background: var(--green-soft); border: 0; border-radius: 99px;
+  padding: 7px 13px; cursor: pointer;
+  transition: transform .06s ease;
+}
+.suggest-chip:active { transform: scale(.94); }
+.suggest-chip .chip-kcal { font-family: var(--mono); font-weight: 600; opacity: .75; margin-left: 4px; }
+
+/* ── Chụp ảnh đo calo ── */
+.photo-box { margin-bottom: 10px; }
+.photo-btn {
+  display: block; width: 100%;
+  background: var(--green); border-color: var(--green); color: #fff; font-weight: 600;
+}
+[data-theme="dark"] .photo-btn { color: #0c1510; }
+.photo-status { font-size: 13.5px; color: var(--ink-2); padding: 8px 2px 0; }
+.photo-results { list-style: none; margin: 6px 0 0; padding: 0; }
+.photo-results li {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 2px; border-top: 1px solid var(--hair);
+}
+.photo-results .pr-name { flex: 1; min-width: 0; }
+.photo-results .pr-kcal { font-family: var(--mono); font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+
 /* ── Toast ── */
 .toast {
   position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 40;

@@ -231,6 +231,21 @@
     <h2 id="sheet-title">Thêm món</h2>
     <button type="button" id="sheet-close" class="btn icon" aria-label="Đóng">✕</button>
   </div>
+
+  <!-- Chụp ảnh đo calo — chỉ bản Artifact (claude.ai) mở khoá được -->
+  <div id="photo-box" class="photo-box hidden">
+    <button type="button" id="btn-photo" class="btn photo-btn">📷 Chụp ảnh món ăn — AI ước tính calo</button>
+    <input type="file" id="photo-file" accept="image/*" capture="environment" class="hidden">
+    <div id="photo-status" class="photo-status hidden"></div>
+    <ul id="photo-results" class="photo-results"></ul>
+  </div>
+
+  <!-- Món hay ăn 7 ngày gần nhất -->
+  <div id="food-suggest" class="suggest hidden">
+    <div class="suggest-head">⭐ Hay ăn gần đây</div>
+    <div id="suggest-chips" class="suggest-chips"></div>
+  </div>
+
   <input type="search" id="food-search" class="input search" placeholder="Tìm món… (gõ không dấu cũng được)" autocomplete="off">
   <div class="pills" id="food-cats">
     <button type="button" class="pill active" data-cat="">Tất cả</button>
