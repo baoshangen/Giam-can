@@ -78,6 +78,7 @@ h2 { font-size: 15px; margin-bottom: 10px; }
 .topbar h1 { font-size: 19px; }
 main { max-width: 560px; margin: 0 auto; padding: 14px 14px 8px; }
 .panel { display: flex; flex-direction: column; gap: 12px; animation: panel-in .22s ease; }
+.panel[hidden] { display: none; } /* BẮT BUỘC: display:flex ở trên đè mất luật ẩn [hidden] của trình duyệt */
 @keyframes panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 .card {
