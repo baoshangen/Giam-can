@@ -415,17 +415,30 @@
     for (var i = 0; i < L.MEALS.length; i++) if (L.MEALS[i].id === id) return L.MEALS[i].label;
     return id;
   }
+  var sheetClosing = null;
   function openSheet(meal) {
+    clearTimeout(sheetClosing); sheetClosing = null;
     sheetMeal = meal;
     $('#sheet-title').textContent = 'Thêm vào ' + mealLabel(meal).toLowerCase();
     $('#food-search').value = '';
-    $('#sheet').classList.remove('hidden');
-    $('#sheet-backdrop').classList.remove('hidden');
+    $('#sheet').classList.remove('hidden', 'closing');
+    $('#sheet-backdrop').classList.remove('hidden', 'closing');
+    document.body.classList.add('sheet-open'); // khoá cuộn nền
     renderFoodList();
   }
   function closeSheet() {
-    $('#sheet').classList.add('hidden');
-    $('#sheet-backdrop').classList.add('hidden');
+    if (sheetClosing) return;
+    // animation tuột xuống trước, ẩn hẳn sau
+    $('#sheet').classList.add('closing');
+    $('#sheet-backdrop').classList.add('closing');
+    document.body.classList.remove('sheet-open');
+    sheetClosing = setTimeout(function () {
+      sheetClosing = null;
+      $('#sheet').classList.add('hidden');
+      $('#sheet-backdrop').classList.add('hidden');
+      $('#sheet').classList.remove('closing');
+      $('#sheet-backdrop').classList.remove('closing');
+    }, 200);
   }
   function allFoods() {
     // món tự tạo đứng trước cho dễ với tới; precompute _norm 1 lần để search nhanh
@@ -624,6 +637,9 @@
     }
     render();
   });
+
+  // iOS Safari chỉ kích hoạt :active (nút lún khi bấm) nếu trang có nghe touchstart
+  document.addEventListener('touchstart', function () {}, { passive: true });
 
   // ── Khởi động ─────────────────────────────────────────
   state = load();
