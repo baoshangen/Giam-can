@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f8f5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Giảm Cân</title>
+  <link rel="stylesheet" href="fonts-embedded.css">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Chống chớp theme: đặt data-theme TRƯỚC khi vẽ trang
+    try {
+      var t = localStorage.getItem('giam-can-theme');
+      if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } catch (e) {}
+  </script>
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="topbar-title">Hôm nay</h1>
+  <button type="button" id="btn-theme" class="btn icon" aria-label="Đổi giao diện sáng/tối">🌙</button>
+</header>
+
+<main>
+  <!-- ═══════════ TAB 1: HÔM NAY ═══════════ -->
+  <section id="tab-homnay" class="panel">
+    <div class="date-nav">
+      <button type="button" id="btn-day-prev" class="btn icon" aria-label="Ngày trước">‹</button>
+      <div id="day-label" class="date-label">—</div>
+      <button type="button" id="btn-day-next" class="btn icon" aria-label="Ngày sau">›</button>
+    </div>
+
+    <!-- Empty state khi chưa có kế hoạch -->
+    <div id="today-onboard" class="card onboard hidden">
+      <div class="onboard-emoji">🌱</div>
+      <p><strong>Chưa có kế hoạch giảm cân.</strong><br>Thiết lập tuổi, chiều cao, mục tiêu để app tính ngân sách calo mỗi ngày cho bạn.</p>
+      <button type="button" class="btn primary" data-goto="kehoach">Thiết lập kế hoạch</button>
+    </div>
+
+    <!-- Hero: vòng calo còn lại -->
+    <div id="today-hero" class="card hero-card">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 200 200" class="ring-svg" aria-hidden="true">
+          <circle class="ring-track" cx="100" cy="100" r="86"></circle>
+          <circle id="ring-fill" class="ring-fill" cx="100" cy="100" r="86"></circle>
+        </svg>
+        <div class="ring-center">
+          <div id="ring-num" class="ring-num mono">—</div>
+          <div id="ring-sub" class="ring-sub">kcal còn lại</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><span class="hstat-label">Ngân sách</span><span id="stat-budget" class="mono">—</span></div>
+        <div class="hstat"><span class="hstat-label">Đã ăn</span><span id="stat-eaten" class="mono">0</span></div>
+        <div class="hstat"><span class="hstat-label">Chuỗi ngày</span><span id="stat-streak" class="mono">0</span></div>
+      </div>
+    </div>
+
+    <!-- Cân nhanh buổi sáng -->
+    <div id="quick-weigh" class="card quick-weigh hidden">
+      <span>⚖️ Sáng nay cân được</span>
+      <input type="number" id="quick-weigh-input" inputmode="decimal" step="0.1" min="20" max="300" placeholder="0.0" class="input num">
+      <span>kg</span>
+      <button type="button" id="btn-quick-weigh" class="btn primary sm">Lưu</button>
+    </div>
+
+    <!-- 4 bữa -->
+    <div id="meals"></div>
+  </section>
+
+  <!-- ═══════════ TAB 2: CÂN NẶNG ═══════════ -->
+  <section id="tab-cannang" class="panel" hidden>
+    <div class="card weight-now">
+      <div class="wn-main">
+        <span id="wn-kg" class="wn-kg mono">—</span>
+        <span class="wn-unit">kg</span>
+      </div>
+      <div class="wn-deltas">
+        <div class="wn-delta"><span id="wn-vs-week" class="badge">—</span><span class="wn-delta-label">so với tuần trước</span></div>
+        <div class="wn-delta"><span id="wn-vs-goal" class="badge">—</span><span class="wn-delta-label">tới mục tiêu</span></div>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-head">
+        <h2>Diễn biến</h2>
+        <div class="pills" id="chart-range">
+          <button type="button" class="pill active" data-range="30">30 ngày</button>
+          <button type="button" class="pill" data-range="90">90 ngày</button>
+          <button type="button" class="pill" data-range="0">Tất cả</button>
+        </div>
+      </div>
+      <div id="chart-empty" class="chart-empty hidden">Cần ít nhất 2 lần cân để vẽ biểu đồ 📈</div>
+      <svg id="chart-svg" viewBox="0 0 360 220" class="chart-svg" aria-label="Biểu đồ cân nặng">
+        <defs>
+          <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" class="grad-top"></stop>
+            <stop offset="100%" class="grad-bot"></stop>
+          </linearGradient>
+        </defs>
+        <g id="chart-grid"></g>
+        <path id="chart-area" class="chart-area" d=""></path>
+        <path id="chart-line" class="chart-line" d=""></path>
+        <path id="chart-ma" class="chart-ma" d=""></path>
+        <line id="chart-goal" class="chart-goal" x1="0" x2="0" y1="0" y2="0"></line>
+        <g id="chart-dots"></g>
+        <g id="chart-labels"></g>
+      </svg>
+      <div class="chart-legend">
+        <span class="lg lg-raw">Cân thực</span>
+        <span class="lg lg-ma">Trung bình 7 ngày</span>
+        <span class="lg lg-goal">Mục tiêu</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Lịch sử cân</h2>
+      <ul id="weight-history" class="rowlist"></ul>
+      <div id="weight-history-empty" class="empty-note hidden">Chưa có lần cân nào — nhập cân ở tab Hôm nay nhé.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 3: KẾ HOẠCH ═══════════ -->
+  <section id="tab-kehoach" class="panel" hidden>
+    <div class="card">
+      <h2>Về bạn</h2>
+      <div class="form-grid">
+        <label class="field">
+          <span>Giới tính</span>
+          <div class="seg" id="seg-sex">
+            <button type="button" data-val="male" class="active">Nam</button>
+            <button type="button" data-val="female">Nữ</button>
+          </div>
+        </label>
+        <label class="field"><span>Tuổi</span><input type="number" id="f-age" inputmode="numeric" min="10" max="100" class="input"></label>
+        <label class="field"><span>Chiều cao (cm)</span><input type="number" id="f-height" inputmode="numeric" min="100" max="230" class="input"></label>
+        <label class="field"><span>Cân hiện tại (kg)</span><input type="number" id="f-weight" inputmode="decimal" step="0.1" min="20" max="300" class="input"></label>
+        <label class="field span2">
+          <span>Mức vận động</span>
+          <select id="f-activity" class="input">
+            <option value="1.2">Ít vận động (ngồi nhiều)</option>
+            <option value="1.375">Nhẹ (tập 1–3 buổi/tuần)</option>
+            <option value="1.55">Vừa (tập 3–5 buổi/tuần)</option>
+            <option value="1.725">Nhiều (tập 6–7 buổi/tuần)</option>
+            <option value="1.9">Rất nhiều (lao động nặng)</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Mục tiêu</h2>
+      <div class="form-grid">
+        <label class="field"><span>Cân mục tiêu (kg)</span><input type="number" id="f-target" inputmode="decimal" step="0.1" min="20" max="300" class="input"></label>
+        <label class="field span2">
+          <span>Tốc độ giảm</span>
+          <div class="seg" id="seg-deficit">
+            <button type="button" data-val="0.25">0,25 kg/tuần<small>nhẹ nhàng</small></button>
+            <button type="button" data-val="0.5" class="active">0,5 kg/tuần<small>chuẩn</small></button>
+            <button type="button" data-val="0.75">0,75 kg/tuần<small>gắt</small></button>
+          </div>
+        </label>
+      </div>
+      <button type="button" id="btn-save-plan" class="btn primary block">Lưu kế hoạch</button>
+    </div>
+
+    <div id="plan-results" class="hidden">
+      <div id="plan-warning" class="warn-banner hidden">⚠️ Ngân sách dưới mức an toàn — hãy chọn tốc độ giảm chậm hơn.</div>
+      <div class="result-row">
+        <div class="card result-card"><span class="r-label">BMR</span><span id="r-bmr" class="r-num mono">—</span><span class="r-unit">kcal</span></div>
+        <div class="card result-card"><span class="r-label">TDEE</span><span id="r-tdee" class="r-num mono">—</span><span class="r-unit">kcal</span></div>
+      </div>
+      <div class="card result-card big">
+        <span class="r-label">Ngân sách mỗi ngày</span>
+        <span id="r-budget" class="r-num-big mono">—</span>
+        <span class="r-unit">kcal</span>
+      </div>
+      <div class="card result-card big">
+        <span class="r-label">Dự kiến đạt mục tiêu</span>
+        <span id="r-eta" class="r-eta">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 4: CÀI ĐẶT ═══════════ -->
+  <section id="tab-caidat" class="panel" hidden>
+    <div class="card">
+      <h2>Giao diện</h2>
+      <div class="seg" id="seg-theme">
+        <button type="button" data-val="auto">Tự động</button>
+        <button type="button" data-val="light">Sáng</button>
+        <button type="button" data-val="dark">Tối</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Món của tôi</h2>
+      <ul id="custom-foods" class="rowlist"></ul>
+      <div id="custom-foods-empty" class="empty-note">Chưa có món tự tạo. Khi thêm món bằng "Nhập tay", tick "Lưu vào món của tôi" là món sẽ hiện ở đây.</div>
+    </div>
+    <div class="card">
+      <h2>Dữ liệu</h2>
+      <p class="muted">Dữ liệu nằm trên máy này. Xuất file backup định kỳ để không mất khi đổi máy/xoá trình duyệt.</p>
+      <div class="btn-row">
+        <button type="button" id="btn-export" class="btn">📤 Xuất dữ liệu</button>
+        <button type="button" id="btn-import" class="btn">📥 Nhập dữ liệu</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json" class="hidden">
+      <button type="button" id="btn-wipe" class="btn danger block">Xoá hết dữ liệu</button>
+    </div>
+    <p class="version muted">Giảm Cân v1 · làm bởi Claude cho Ray 💚</p>
+  </section>
+</main>
+
+<!-- ═══════════ BOTTOM NAV ═══════════ -->
+<nav class="bottomnav">
+  <button type="button" class="nav-btn active" data-tab="homnay"><span class="nav-ico">🍚</span><span>Hôm nay</span></button>
+  <button type="button" class="nav-btn" data-tab="cannang"><span class="nav-ico">⚖️</span><span>Cân nặng</span></button>
+  <button type="button" class="nav-btn" data-tab="kehoach"><span class="nav-ico">🎯</span><span>Kế hoạch</span></button>
+  <button type="button" class="nav-btn" data-tab="caidat"><span class="nav-ico">⚙️</span><span>Cài đặt</span></button>
+</nav>
+
+<!-- ═══════════ SHEET THÊM MÓN ═══════════ -->
+<div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
+<div id="sheet" class="sheet hidden" role="dialog" aria-label="Thêm món">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2 id="sheet-title">Thêm món</h2>
+    <button type="button" id="sheet-close" class="btn icon" aria-label="Đóng">✕</button>
+  </div>
+  <input type="search" id="food-search" class="input search" placeholder="Tìm món… (gõ không dấu cũng được)" autocomplete="off">
+  <div class="pills" id="food-cats">
+    <button type="button" class="pill active" data-cat="">Tất cả</button>
+    <button type="button" class="pill" data-cat="com">Cơm</button>
+    <button type="button" class="pill" data-cat="bun-pho">Bún/Phở</button>
+    <button type="button" class="pill" data-cat="banh-xoi">Bánh/Xôi</button>
+    <button type="button" class="pill" data-cat="do-uong">Đồ uống</button>
+    <button type="button" class="pill" data-cat="an-vat">Ăn vặt</button>
+    <button type="button" class="pill" data-cat="khac">Khác</button>
+  </div>
+  <ul id="food-list" class="foodlist"></ul>
+  <div class="manual-entry">
+    <div class="manual-head">Nhập tay</div>
+    <div class="manual-row">
+      <input type="text" id="manual-name" class="input" placeholder="Tên món" maxlength="60">
+      <input type="number" id="manual-kcal" class="input num" inputmode="numeric" min="1" max="5000" placeholder="kcal">
+    </div>
+    <label class="check"><input type="checkbox" id="manual-save"> Lưu vào món của tôi</label>
+    <button type="button" id="btn-manual-add" class="btn primary block">Thêm món này</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script src="can-logic.js"></script>
+<script src="foods-db.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
