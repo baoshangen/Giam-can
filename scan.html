@@ -81,8 +81,9 @@
 (function () {
   'use strict';
   var KEY_STORE = 'giam-can-gemini-key';
-  // Thử lần lượt — model đầu 404 (Google đổi tên) thì tự nhảy model sau
-  var MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  // Thử lần lượt — model đầu 404 (Google đổi tên) thì tự nhảy model sau.
+  // Đo thật 02/09/2026 với key AQ.* của Ray: 'gemini-flash-latest' chạy, 'gemini-2.5-flash' 404.
+  var MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
   var $ = function (s) { return document.querySelector(s); };
   var lastResults = [];
 
@@ -138,6 +139,13 @@
       var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + MODELS[i] + ':generateContent?key=' + encodeURIComponent(key), {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body,
       });
+      if (res.status === 503) { // Gemini quá tải thoáng qua (đã gặp thật) → nghỉ 2s thử lại đúng 1 lần
+        await new Promise(function (r) { setTimeout(r, 2000); });
+        res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + MODELS[i] + ':generateContent?key=' + encodeURIComponent(key), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body,
+        });
+        if (res.status === 503) throw new Error('BUSY');
+      }
       if (res.status === 404) { lastErr = new Error('model'); continue; } // model đổi tên → thử model sau
       if (res.status === 400 || res.status === 403) throw new Error('KEY');
       if (res.status === 429) throw new Error('QUOTA');
@@ -207,6 +215,7 @@
       var m = e && e.message;
       if (m === 'KEY') { status('Key không hợp lệ hoặc hết hạn — dán key khác nha.'); setKey(''); showMode(); }
       else if (m === 'QUOTA') status('Hết lượt miễn phí hôm nay của Gemini — mai quét tiếp, giờ tả chữ trong app nha.');
+      else if (m === 'BUSY') status('Gemini đang quá tải — đợi chút bấm quét lại nha.');
       else if (m === 'model') status('Google đổi tên model — báo Claude cập nhật máy quét giùm.');
       else status('Trục trặc: ' + m + ' — kiểm tra mạng rồi thử lại.');
     } finally {
