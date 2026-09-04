@@ -379,6 +379,10 @@ main { max-width: 560px; margin: 0 auto; padding: 14px 14px 8px; }
   background: var(--green); border-color: var(--green); color: #fff; font-weight: 600;
 }
 [data-theme="dark"] .photo-btn { color: #0c1510; }
+.photo-btn { margin-bottom: 8px; }
+.ai-desc-row { display: flex; gap: 8px; }
+.ai-desc-row .input { flex: 1; min-width: 0; }
+.ai-desc-row .btn { flex-shrink: 0; }
 .photo-status { font-size: 13.5px; color: var(--ink-2); padding: 8px 2px 0; }
 .photo-results { list-style: none; margin: 6px 0 0; padding: 0; }
 .photo-results li {

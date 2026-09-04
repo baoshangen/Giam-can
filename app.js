@@ -37,9 +37,15 @@
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
   // ── Lưu / nạp / transaction ───────────────────────────
+  var stateListeners = [];       // module sync (db-sync.js) đăng ký nghe mọi lần lưu
+  var applyingRemote = false;    // đang nhận state từ mây → GIỮ updatedAt của mây, không bump
   function save() {
+    if (!applyingRemote) state.updatedAt = Date.now(); // dấu thời gian để 2 thiết bị phân thắng thua
     try { localStorage.setItem(KEY, JSON.stringify(state)); }
     catch (e) { console.warn('Không lưu được vào localStorage', e); }
+    stateListeners.forEach(function (cb) {
+      try { cb(state, applyingRemote); } catch (e) { console.warn(e); }
+    });
   }
   // Chuẩn hoá state từ mọi nguồn (localStorage cũ, file import) → không thiếu trường, lọc rác.
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -101,6 +107,7 @@
 
     out.settings = Object.assign({ theme: 'auto' }, (s.settings && typeof s.settings === 'object') ? s.settings : {});
     if (['auto', 'light', 'dark'].indexOf(out.settings.theme) < 0) out.settings.theme = 'auto';
+    out.updatedAt = Number(s.updatedAt) || 0;
     return out;
   }
   function clampNum(v, lo, hi) {
@@ -660,13 +667,23 @@
     render();
   });
 
-  // Hook cho module ngoài (photo.js bản Artifact): thêm món vào bữa đang mở trong sheet
+  // Hook cho module ngoài (photo.js, db-sync.js — chỉ có ở bản Artifact)
   window.GiamCan = {
     addFood: function (name, kcal) {
       apply(function (s) {
         return addEntry(s, viewDate, sheetMeal, { id: null, name: String(name).slice(0, 80), kcal: Math.round(Number(kcal)) });
       }, '+ ' + name);
     },
+    getState: function () { return JSON.parse(JSON.stringify(state)); },
+    // Nhận state từ mây: normalize như import file; lỗi thì apply tự rollback, không hư state đang chạy
+    replaceState: function (s, silent) {
+      var incoming = normalize(s);
+      applyingRemote = true;
+      try { apply(function () { return incoming; }, silent ? null : '☁️ Đã đồng bộ'); }
+      finally { applyingRemote = false; }
+      applyTheme();
+    },
+    onStateChange: function (cb) { stateListeners.push(cb); },
   };
 
   // iOS Safari chỉ kích hoạt :active (nút lún khi bấm) nếu trang có nghe touchstart

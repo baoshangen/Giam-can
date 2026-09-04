@@ -203,15 +203,17 @@
     </div>
     <div class="card">
       <h2>Dữ liệu</h2>
-      <p class="muted">Dữ liệu nằm trên máy này. Xuất file backup định kỳ để không mất khi đổi máy/xoá trình duyệt.</p>
+      <p id="sync-status" class="muted hidden">☁️ Đồng bộ theo tài khoản Claude: <strong>đang bật</strong> — mọi thiết bị đăng nhập đều thấy cùng dữ liệu.</p>
+      <p id="sync-off-note" class="muted">Dữ liệu nằm trên máy này. Xuất file backup định kỳ để không mất khi đổi máy/xoá trình duyệt.</p>
       <div class="btn-row">
         <button type="button" id="btn-export" class="btn">📤 Xuất dữ liệu</button>
         <button type="button" id="btn-import" class="btn">📥 Nhập dữ liệu</button>
       </div>
       <input type="file" id="import-file" accept="application/json" class="hidden">
       <button type="button" id="btn-wipe" class="btn danger block">Xoá hết dữ liệu</button>
+      <p id="diag-photo" class="muted">📷 Chụp ảnh đo calo: đang kiểm tra…</p>
     </div>
-    <p class="version muted">Giảm Cân v1 · làm bởi Claude cho Ray 💚</p>
+    <p class="version muted">Giảm Cân v3.1 · 02/09/2026 · làm bởi Claude cho Ray 💚</p>
   </section>
 </main>
 
@@ -232,10 +234,15 @@
     <button type="button" id="sheet-close" class="btn icon" aria-label="Đóng">✕</button>
   </div>
 
-  <!-- Chụp ảnh đo calo — chỉ bản Artifact (claude.ai) mở khoá được -->
+  <!-- AI đo calo (ảnh + tả chữ) — chỉ bản Artifact (claude.ai) mở khoá được -->
   <div id="photo-box" class="photo-box hidden">
-    <button type="button" id="btn-photo" class="btn photo-btn">📷 Chụp ảnh món ăn — AI ước tính calo</button>
+    <button type="button" id="btn-photo" class="btn photo-btn hidden">📷 Chụp ảnh món ăn — AI ước tính calo</button>
+    <a id="scan-link" class="btn photo-btn hidden" href="https://baoshangen.github.io/Giam-can/scan.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">📷 Mở Máy Quét Calo (chụp ảnh)</a>
     <input type="file" id="photo-file" accept="image/*" capture="environment" class="hidden">
+    <div class="ai-desc-row">
+      <input type="text" id="ai-desc" class="input" placeholder="Tả món: '1 tô bún bò đầy đủ, thêm chả'" maxlength="200">
+      <button type="button" id="btn-ai-desc" class="btn primary sm">🤖 Ước tính</button>
+    </div>
     <div id="photo-status" class="photo-status hidden"></div>
     <ul id="photo-results" class="photo-results"></ul>
   </div>
